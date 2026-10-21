@@ -3,405 +3,319 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>9jaCash HQ - Create Admin</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<title>Create User - 9jaCash Admin</title>
+
+<!-- Firebase v8 Compatibility SDKs -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+<!-- Firebase Config & Helper -->
+<script src="firebase.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="firebase-init.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
 <style>
-:root{
-  --bg:#070b14;--surface:#0f1623;--surface2:#161f30;--surface3:#1e2a40;
-  --border:#253049;--border2:#2d3d5c;
-  --accent:#00d4aa;--accent2:#00b894;--accent-glow:rgba(0,212,170,0.15);
-  --danger:#ff4757;--warning:#ffa502;--info:#3742fa;--purple:#a55eea;
-  --text:#c8d6e5;--text2:#8395a7;--text3:#576574;--text4:#2f3542;
-}
 *{margin:0;padding:0;box-sizing:border-box;}
-::-webkit-scrollbar{width:7px;height:7px;}
-::-webkit-scrollbar-track{background:var(--surface);border-radius:4px;}
-::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:4px;border:1px solid var(--border);}
-*{scrollbar-width:thin;scrollbar-color:var(--surface3) var(--surface);}
-body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-tap-highlight-color:transparent;}
-.bg-anim{position:fixed;inset:0;z-index:0;overflow:hidden;}
-.bg-anim::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle at 30% 30%,rgba(0,212,170,0.03) 0%,transparent 50%),radial-gradient(circle at 70% 70%,rgba(165,94,234,0.03) 0%,transparent 50%);animation:bgFloat 20s ease-in-out infinite;}
-@keyframes bgFloat{0%,100%{transform:translate(0,0) rotate(0deg);}50%{transform:translate(-2%,2%) rotate(1deg);}}
-.grid-overlay{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:60px 60px;opacity:0.15;}
-.hidden{display:none !important;}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:#0f172a;color:#f8fafc;min-height:100vh;transition:all 0.3s ease;}
 
-/* Loading */
-.loading-wrap{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:1000;}
-.loading-wrap.active{display:flex;}
-.load-spinner{width:44px;height:44px;border-radius:50%;border:3px solid var(--surface3);border-top-color:var(--accent);animation:spin 0.9s linear infinite;}
+body.light-mode{background:#f8fafc;color:#1e293b;}
+body.light-mode .soft-bg{background:radial-gradient(ellipse at 0% 0%,rgba(99,102,241,0.08),transparent 50%),radial-gradient(ellipse at 100% 100%,rgba(236,72,153,0.06),transparent 50%),radial-gradient(ellipse at 50% 50%,rgba(16,185,129,0.04),transparent 50%),#f8fafc;}
+body.light-mode .card{background:#fff;border-color:#e2e8f0;box-shadow:0 4px 24px rgba(0,0,0,0.06);}
+body.light-mode .input-field{background:#f8fafc;border-color:#e2e8f0;color:#1e293b;}
+body.light-mode .input-field:focus{border-color:#6366f1;background:#fff;}
+body.light-mode .back-btn{background:#fff;border-color:#e2e8f0;color:#64748b;}
+body.light-mode .back-btn:hover{background:#f1f5f9;color:#6366f1;}
+body.light-mode .header-title{color:#1e293b;}
+body.light-mode .submit-btn:disabled{background:#e2e8f0;color:#94a3b8;}
+body.light-mode .theme-toggle{color:#64748b;}
+body.light-mode .flow-badge{background:#f1f5f9;color:#64748b;border-color:#e2e8f0;}
+body.light-mode .input-label{color:#64748b;}
+body.light-mode .footer-text{color:#94a3b8;}
+
+.soft-bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse at 0% 0%,rgba(99,102,241,0.12),transparent 50%),radial-gradient(ellipse at 100% 100%,rgba(236,72,153,0.08),transparent 50%),radial-gradient(ellipse at 50% 50%,rgba(16,185,129,0.06),transparent 50%),#0f172a;transition:all 0.3s ease;}
+
+.app{position:relative;z-index:1;max-width:480px;margin:0 auto;padding:0 20px 40px;}
+
+.topbar{padding:24px 0 16px;display:flex;align-items:center;justify-content:space-between;}
+.back-btn{width:44px;height:44px;border-radius:14px;background:#1e293b;border:1px solid #334155;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:16px;cursor:pointer;transition:all 0.3s;}
+.back-btn:hover{background:#334155;color:#818cf8;}
+.back-btn:active{transform:scale(0.92);}
+.header-title{font-size:18px;font-weight:800;color:#f8fafc;transition:color 0.3s;}
+.theme-toggle{width:44px;height:44px;border-radius:14px;background:#1e293b;border:1px solid #334155;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:16px;cursor:pointer;transition:all 0.3s;}
+.theme-toggle:hover{background:#334155;color:#818cf8;}
+
+.flow-badge{display:inline-flex;align-items:center;gap:6px;background:#1e293b;border:1px solid #334155;border-radius:50px;padding:6px 14px;font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:16px;}
+.flow-badge i{font-size:12px;color:#6366f1;}
+
+.form-header{text-align:center;padding:10px 0 20px;}
+.form-title{font-size:24px;font-weight:900;color:#f8fafc;letter-spacing:-0.5px;transition:color 0.3s;}
+.form-subtitle{font-size:13px;color:#64748b;margin-top:6px;font-weight:500;}
+
+.card{background:#1e293b;border-radius:24px;padding:24px;border:1px solid #334155;box-shadow:0 4px 24px rgba(0,0,0,0.2);margin-bottom:16px;transition:all 0.3s ease;}
+
+.input-group{margin-bottom:18px;}
+.input-label{display:block;font-size:12px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;}
+.input-wrapper{position:relative;display:flex;align-items:center;}
+.input-icon{position:absolute;left:16px;color:#64748b;font-size:15px;pointer-events:none;transition:color 0.3s;}
+.input-field{width:100%;padding:14px 16px 14px 44px;background:#0f172a;border:1px solid #334155;border-radius:14px;color:#f8fafc;font-size:14px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;outline:none;transition:all 0.3s;}
+.input-field:focus{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,0.15);}
+.input-field:focus + .input-icon{color:#6366f1;}
+
+.toggle-password{position:absolute;right:16px;color:#64748b;font-size:14px;cursor:pointer;background:none;border:none;padding:0;}
+.toggle-password:hover{color:#818cf8;}
+
+.submit-btn{width:100%;padding:18px;border-radius:18px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:16px;font-weight:800;border:none;cursor:pointer;transition:all 0.3s;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 20px rgba(99,102,241,0.3);position:relative;overflow:hidden;margin-top:8px;}
+.submit-btn::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);transition:0.5s;}
+.submit-btn:hover::before{left:100%;}
+.submit-btn:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(99,102,241,0.4);}
+.submit-btn:active{transform:scale(0.97);}
+.submit-btn:disabled{background:#1e293b;color:#64748b;box-shadow:none;cursor:not-allowed;border:1px solid #334155;}
+.submit-btn:disabled::before{display:none;}
+
+.footer{text-align:center;margin-top:32px;}
+.footer-text{font-size:12px;color:#64748b;font-weight:500;transition:color 0.3s;}
+
+@keyframes slideUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
 @keyframes spin{to{transform:rotate(360deg);}}
-.load-text{margin-top:18px;font-weight:700;font-size:16px;}
-.load-sub{margin-top:4px;font-size:12px;color:var(--text3);}
 
-/* Layout */
-.app{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:0 16px 40px;}
-.nav-sidebar{position:fixed;top:0;left:0;bottom:0;width:70px;background:var(--surface);border-right:1px solid var(--border);z-index:100;display:flex;flex-direction:column;align-items:center;padding:20px 0;gap:8px;}
-.nav-logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:700;margin-bottom:24px;box-shadow:0 4px 16px rgba(0,212,170,0.3);}
-.nav-item{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:18px;cursor:pointer;transition:all 0.3s;text-decoration:none;}
-.nav-item:hover{background:var(--surface2);color:var(--text2);}
-.nav-item.active{background:var(--accent);color:#fff;box-shadow:0 4px 16px rgba(0,212,170,0.3);}
-.nav-bottom{margin-top:auto;display:flex;flex-direction:column;gap:8px;}
-.content{margin-left:70px;padding:24px 20px;}
-.content-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;gap:12px;flex-wrap:wrap;}
-.header-title{font-size:24px;font-weight:700;}
-.header-sub{font-size:13px;color:var(--text2);margin-top:2px;}
-.live-pill{display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:50px;background:var(--surface2);border:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text2);}
-.live-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:liveBlink 2s infinite;}
-@keyframes liveBlink{0%,100%{opacity:1;}50%{opacity:0.3;}}
-
-/* Panels & forms */
-.panel{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:24px;margin-bottom:20px;transition:all 0.3s;}
-.panel:hover{border-color:var(--border2);}
-.panel-header{display:flex;align-items:center;gap:14px;margin-bottom:20px;}
-.panel-icon{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
-.panel-icon.green{background:rgba(0,212,170,0.1);color:var(--accent);}
-.panel-icon.purple{background:rgba(165,94,234,0.1);color:var(--purple);}
-.panel-title{font-size:16px;font-weight:700;}
-.panel-sub{font-size:13px;color:var(--text2);margin-top:2px;}
-.form-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
-.form-row.two{grid-template-columns:repeat(2,1fr);}
-.form-group{margin-bottom:16px;}
-.form-label{display:block;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
-.form-input{width:100%;padding:14px 16px;border-radius:12px;background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-size:14px;font-weight:500;transition:all 0.3s;font-family:'Space Grotesk',sans-serif;}
-.form-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
-.form-input::placeholder{color:var(--text4);}
-.form-input.mono{font-family:'JetBrains Mono',monospace;}
-.form-input.invalid{border-color:var(--danger);}
-.field-hint{font-size:11px;color:var(--text3);margin-top:6px;display:block;}
-.field-hint.err{color:var(--danger);}
-.input-group{position:relative;display:flex;gap:6px;}
-.input-group .form-input{flex:1;padding-right:16px;}
-.mini-btn{background:var(--surface2);border:1.5px solid var(--border);color:var(--text2);border-radius:12px;padding:0 14px;font-size:13px;cursor:pointer;transition:all 0.2s;font-family:inherit;font-weight:700;white-space:nowrap;}
-.mini-btn:hover{border-color:var(--accent);color:var(--accent);}
-.strength{height:4px;border-radius:4px;background:var(--surface3);margin-top:8px;overflow:hidden;}
-.strength>div{height:100%;width:0;transition:all 0.3s;border-radius:4px;}
-.section-divider{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin:6px 0 14px;display:flex;align-items:center;gap:10px;}
-.section-divider::after{content:'';flex:1;height:1px;background:var(--border);}
-.save-btn{width:100%;height:52px;border-radius:14px;border:none;cursor:pointer;color:#fff;font-size:15px;font-weight:700;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg,var(--purple),var(--accent));box-shadow:0 4px 20px rgba(0,212,170,0.2);transition:all 0.3s;}
-.save-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,212,170,0.3);}
-.save-btn:active{transform:scale(0.98);}
-.save-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
-
-/* Table */
-.tbl-wrap{overflow-x:auto;}
-table{width:100%;border-collapse:collapse;font-size:13px;}
-th{text-align:left;padding:12px;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);}
-td{padding:12px;border-bottom:1px solid var(--surface3);}
-.pill{padding:3px 10px;border-radius:50px;font-size:11px;font-weight:700;}
-.pill.on{background:rgba(0,212,170,0.1);color:var(--accent);}
-.pill.off{background:rgba(255,71,87,0.1);color:var(--danger);}
-.code{font-family:'JetBrains Mono',monospace;color:#38bdf8;font-weight:700;}
-
-/* Toast */
-.toast{position:fixed;top:20px;right:20px;background:var(--surface);border:1px solid var(--border);padding:16px 20px;border-radius:16px;display:flex;align-items:center;gap:12px;font-size:14px;font-weight:600;color:var(--text);z-index:20000;transition:all 0.4s cubic-bezier(0.16,1,0.3,1);box-shadow:0 20px 60px rgba(0,0,0,0.5);transform:translateX(150%);opacity:0;}
-.toast.show{transform:translateX(0);opacity:1;}
-.toast i{color:var(--accent);font-size:18px;}
-
-@media(max-width:700px){
-  .form-row,.form-row.two{grid-template-columns:1fr;}
-  .content{padding:20px 4px;}
-  .header-title{font-size:20px;}
-}
+.anim{animation:slideUp 0.6s ease both;}
+.d1{animation-delay:0.1s;}
+.d2{animation-delay:0.2s;}
+.d3{animation-delay:0.3s;}
+.d4{animation-delay:0.4s;}
 </style>
 </head>
 <body>
-<div class="bg-anim"></div>
-<div class="grid-overlay"></div>
 
-<!-- LOADING -->
-<div class="loading-wrap" id="loadingScreen">
-  <div class="load-spinner"></div>
-  <div class="load-text">Loading HQ</div>
-  <div class="load-sub">Initializing...</div>
+<div class="soft-bg"></div>
+
+<div class="app">
+
+<div class="topbar anim d1">
+  <button class="back-btn" onclick="goBack()">
+    <i class="fa-solid fa-arrow-left"></i>
+  </button>
+  <div class="header-title">Admin Management</div>
+  <button class="theme-toggle" onclick="toggleTheme()">
+    <i class="fa-solid fa-sun" id="themeIcon"></i>
+  </button>
 </div>
 
-<!-- MAIN APP -->
-<div class="app" id="mainApp">
-
-  <div class="nav-sidebar">
-    <div class="nav-logo">9</div>
-    <a class="nav-item" href="admin.html" title="Back to Dashboard"><i class="fa-solid fa-chart-pie"></i></a>
-    <div class="nav-item active" title="Create Admin"><i class="fa-solid fa-user-plus"></i></div>
+<div class="anim d1" style="text-align:center;">
+  <div class="flow-badge">
+    <i class="fa-solid fa-user-plus"></i> <span>User Management</span>
   </div>
+</div>
 
-  <div class="content">
-    <div class="content-header">
-      <div>
-        <div class="header-title">Create Admin</div>
-        <div class="header-sub">Add a new admin account with login credentials and referral code</div>
+<div class="form-header anim d1">
+  <div class="form-title">Create New User</div>
+  <div class="form-subtitle">Register user account and store login credentials in Admin collection</div>
+</div>
+
+<div class="card anim d2">
+  <form id="createUserForm" onsubmit="handleCreateUser(event)">
+    <div class="input-group">
+      <label class="input-label" for="userName">Full Name</label>
+      <div class="input-wrapper">
+        <input type="text" id="userName" class="input-field" placeholder="Enter full name" required />
+        <i class="fa-solid fa-user input-icon"></i>
       </div>
-      <div class="live-pill"><div class="live-dot"></div><span id="whoami">Public Access Mode</span></div>
     </div>
 
-    <!-- CREATE FORM -->
-    <div class="panel">
-      <div class="panel-header">
-        <div class="panel-icon green"><i class="fa-solid fa-user-plus"></i></div>
-        <div>
-          <div class="panel-title">New Admin Account</div>
-          <div class="panel-sub">Enter credentials and a unique referral code</div>
-        </div>
+    <div class="input-group">
+      <label class="input-label" for="userPhone">Phone Number</label>
+      <div class="input-wrapper">
+        <input type="tel" id="userPhone" class="input-field" placeholder="e.g. 08012345678" required />
+        <i class="fa-solid fa-phone input-icon"></i>
       </div>
+    </div>
 
-      <form id="createAdminForm" onsubmit="createAdmin(event)" novalidate autocomplete="off">
-        <div class="section-divider">Login Credentials</div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="adminEmail">Email Address</label>
-            <input type="email" id="adminEmail" class="form-input" placeholder="admin1@9jacash.com" required>
-            <span class="field-hint" id="emailHint"></span>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="adminPassword">Password</label>
-            <div class="input-group">
-              <input type="password" id="adminPassword" class="form-input" placeholder="Min. 6 characters" required oninput="checkStrength()">
-              <button type="button" class="mini-btn" onclick="togglePass()" title="Show / hide"><i class="fa-solid fa-eye" id="eyeIcon"></i></button>
-              <button type="button" class="mini-btn" onclick="genPass()" title="Generate password"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
-            </div>
-            <div class="strength"><div id="strengthBar"></div></div>
-            <span class="field-hint" id="passHint"></span>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="adminRefCode">Referral Code</label>
-            <div class="input-group">
-              <input type="text" id="adminRefCode" class="form-input mono" placeholder="e.g. ADMIN01" maxlength="20" style="text-transform:uppercase;" required oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9_-]/g,'')">
-              <button type="button" class="mini-btn" onclick="genCode()" title="Generate code"><i class="fa-solid fa-dice"></i></button>
-            </div>
-            <span class="field-hint" id="codeHint">Letters, numbers, - and _ only</span>
-          </div>
-        </div>
+    <div class="input-group">
+      <label class="input-label" for="userEmail">Email Address</label>
+      <div class="input-wrapper">
+        <input type="email" id="userEmail" class="input-field" placeholder="user@example.com" required />
+        <i class="fa-solid fa-envelope input-icon"></i>
+      </div>
+    </div>
 
-        <div class="section-divider">Direct Payout Bank Details (Optional)</div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="adminBankName">Bank Name</label>
-            <input type="text" id="adminBankName" class="form-input" placeholder="Moniepoint, GTBank...">
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="adminAccountNumber">Account Number</label>
-            <input type="text" id="adminAccountNumber" class="form-input mono" maxlength="10" inputmode="numeric" placeholder="10 digits" oninput="this.value=this.value.replace(/\D/g,'')">
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="adminAccountName">Account Name</label>
-            <input type="text" id="adminAccountName" class="form-input" placeholder="Account holder name">
-          </div>
-        </div>
-
-        <button type="submit" class="save-btn" id="createBtn">
-          <i class="fa-solid fa-user-plus"></i> Create Admin Account
+    <div class="input-group">
+      <label class="input-label" for="userPassword">Password</label>
+      <div class="input-wrapper">
+        <input type="password" id="userPassword" class="input-field" placeholder="Enter strong password" required minlength="6" />
+        <i class="fa-solid fa-lock input-icon"></i>
+        <button type="button" class="toggle-password" onclick="togglePasswordVisibility('userPassword', 'passIcon')">
+          <i class="fa-solid fa-eye" id="passIcon"></i>
         </button>
-      </form>
+      </div>
     </div>
 
-    <!-- EXISTING ADMINS -->
-    <div class="panel">
-      <div class="panel-header">
-        <div class="panel-icon purple"><i class="fa-solid fa-users-gear"></i></div>
-        <div style="flex:1;">
-          <div class="panel-title">Existing Admins</div>
-          <div class="panel-sub">Check for duplicate emails or referral codes</div>
-        </div>
-        <button class="mini-btn" style="height:40px;" onclick="loadAdmins()"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
-      </div>
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr><th>Email</th><th>Referral Code</th><th>Status</th></tr></thead>
-          <tbody id="adminsTable"><tr><td colspan="3" style="text-align:center;color:var(--text3);">Loading admins...</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+    <button type="submit" class="submit-btn anim d3" id="submitBtn">
+      <i class="fa-solid fa-user-check"></i> Create User Account
+    </button>
+  </form>
 </div>
 
-<div class="toast" id="toast"><i class="fa-solid fa-circle-check"></i><span id="toastMsg">Saved!</span></div>
+<div class="footer anim d4">
+  <div class="footer-text">9jaCash 2026 • Admin Portal</div>
+</div>
+
+</div>
 
 <script>
-const API_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') ? 'http://localhost:3000' : '';
-let cachedAdmins = [];
-
-// Load page immediately without checks
-window.addEventListener('DOMContentLoaded', () => {
-  loadAdmins();
-});
-
-// ========== HELPERS ==========
-function showToast(msg, type){
-  const t = document.getElementById('toast');
-  const i = t.querySelector('i');
-  document.getElementById('toastMsg').textContent = msg;
-  if (type === 'error') { i.className = 'fa-solid fa-circle-xmark'; i.style.color = 'var(--danger)'; }
-  else { i.className = 'fa-solid fa-circle-check'; i.style.color = 'var(--accent)'; }
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3200);
+// ========== GET FIRESTORE DB ==========
+function getDb() {
+  if (window._9jaCash && window._9jaCash.db) return window._9jaCash.db;
+  if (window.db) return window.db;
+  if (window.firebase && window.firebase.firestore) return window.firebase.firestore();
+  return null;
 }
 
-function esc(s){
-  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// ========== GET FIREBASE AUTH ==========
+function getAuth() {
+  if (window._9jaCash && window._9jaCash.auth) return window._9jaCash.auth;
+  if (window.auth) return window.auth;
+  if (window.firebase && window.firebase.auth) return window.firebase.auth();
+  return null;
 }
 
-function togglePass(){
-  const inp = document.getElementById('adminPassword');
-  const icon = document.getElementById('eyeIcon');
-  const show = inp.type === 'password';
-  inp.type = show ? 'text' : 'password';
-  icon.className = show ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+// ========== THEME MANAGEMENT ==========
+function initTheme() {
+  const isLight = localStorage.getItem("9jaCashDark") !== "true";
+  if (isLight) {
+    document.body.classList.add("light-mode");
+    document.getElementById("themeIcon").className = "fa-solid fa-moon";
+  }
 }
 
-function genPass(){
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
-  const arr = new Uint32Array(12);
-  crypto.getRandomValues(arr);
-  const pw = Array.from(arr, n => chars[n % chars.length]).join('');
-  const inp = document.getElementById('adminPassword');
-  inp.value = pw;
-  inp.type = 'text';
-  document.getElementById('eyeIcon').className = 'fa-solid fa-eye-slash';
-  checkStrength();
+function toggleTheme() {
+  const isLight = document.body.classList.toggle("light-mode");
+  localStorage.setItem("9jaCashDark", !isLight);
+  document.getElementById("themeIcon").className = isLight ? "fa-solid fa-moon" : "fa-solid fa-sun";
 }
 
-function genCode(){
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  const arr = new Uint32Array(6);
-  crypto.getRandomValues(arr);
-  document.getElementById('adminRefCode').value = 'ADM' + Array.from(arr, n => chars[n % chars.length]).join('').slice(0, 5);
+function goBack() {
+  window.history.back();
 }
 
-function checkStrength(){
-  const pw = document.getElementById('adminPassword').value;
-  const bar = document.getElementById('strengthBar');
-  const hint = document.getElementById('passHint');
-  let score = 0;
-  if (pw.length >= 6) score++;
-  if (pw.length >= 10) score++;
-  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
-  if (/\d/.test(pw) && /[^A-Za-z0-9]/.test(pw)) score++;
-  const levels = [
-    { w: '0%',   c: 'transparent',    t: '' },
-    { w: '25%',  c: 'var(--danger)',  t: 'Weak' },
-    { w: '50%',  c: 'var(--warning)', t: 'Fair' },
-    { w: '75%',  c: 'var(--info)',    t: 'Good' },
-    { w: '100%', c: 'var(--accent)',  t: 'Strong' }
-  ];
-  const l = pw ? levels[Math.max(score, 1)] : levels[0];
-  bar.style.width = l.w;
-  bar.style.background = l.c;
-  hint.textContent = l.t;
-  hint.className = 'field-hint';
+function togglePasswordVisibility(fieldId, iconId) {
+  const field = document.getElementById(fieldId);
+  const icon = document.getElementById(iconId);
+  if (field.type === "password") {
+    field.type = "text";
+    icon.className = "fa-solid fa-eye-slash";
+  } else {
+    field.type = "password";
+    icon.className = "fa-solid fa-eye";
+  }
 }
 
-// ========== LIST ADMINS ==========
-function loadAdmins(){
-  const tbody = document.getElementById('adminsTable');
-  fetch(API_URL + '/api/admin/super/juniors')
-    .then(r => r.json())
-    .then(data => {
-      if (!data.status) throw new Error(data.error || 'Failed to load');
-      cachedAdmins = data.juniors || [];
-      if (!cachedAdmins.length) {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text3);">No admins yet</td></tr>';
-        return;
-      }
-      tbody.innerHTML = cachedAdmins.map(a => {
-        const active = a.is_active === 1;
-        return `<tr>
-          <td>${esc(a.email)}</td>
-          <td class="code">${esc(a.referral_code || '-')}</td>
-          <td><span class="pill ${active ? 'on' : 'off'}">${active ? 'Active' : 'Deactivated'}</span></td>
-        </tr>`;
-      }).join('');
-    })
-    .catch(() => {
-      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--danger);">Could not load admins</td></tr>';
+// ========== HANDLE CREATE USER ==========
+async function handleCreateUser(event) {
+  event.preventDefault();
+
+  const name = document.getElementById("userName").value.trim();
+  const phone = document.getElementById("userPhone").value.trim();
+  const email = document.getElementById("userEmail").value.trim();
+  const password = document.getElementById("userPassword").value;
+
+  if (!name || !phone || !email || !password) {
+    Swal.fire({
+      icon: "error",
+      title: "Missing Information",
+      text: "Please fill in all required fields.",
+      background: document.body.classList.contains("light-mode") ? "#fff" : "#1e293b",
+      color: document.body.classList.contains("light-mode") ? "#1e293b" : "#f8fafc"
     });
-}
-
-// ========== CREATE ADMIN ==========
-function setHint(id, msg, isErr){
-  const el = document.getElementById(id);
-  el.textContent = msg;
-  el.className = 'field-hint' + (isErr ? ' err' : '');
-}
-
-function createAdmin(e){
-  e.preventDefault();
-
-  const emailEl = document.getElementById('adminEmail');
-  const passEl = document.getElementById('adminPassword');
-  const codeEl = document.getElementById('adminRefCode');
-
-  const email = emailEl.value.trim().toLowerCase();
-  const password = passEl.value.trim();
-  const referralCode = codeEl.value.trim().toUpperCase();
-  const bankName = document.getElementById('adminBankName').value.trim();
-  const accountNumber = document.getElementById('adminAccountNumber').value.trim();
-  const accountName = document.getElementById('adminAccountName').value.trim();
-
-  [emailEl, passEl, codeEl].forEach(el => el.classList.remove('invalid'));
-  setHint('emailHint', '');
-  setHint('codeHint', 'Letters, numbers, - and _ only');
-
-  // Validation
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+\$/.test(email)) {
-    emailEl.classList.add('invalid'); setHint('emailHint', 'Enter a valid email address', true); emailEl.focus(); return;
-  }
-  if (cachedAdmins.some(a => (a.email || '').toLowerCase() === email)) {
-    emailEl.classList.add('invalid'); setHint('emailHint', 'An admin with this email already exists', true); emailEl.focus(); return;
-  }
-  if (password.length < 6) {
-    passEl.classList.add('invalid'); setHint('passHint', 'Password must be at least 6 characters', true); passEl.focus(); return;
-  }
-  if (!referralCode) {
-    codeEl.classList.add('invalid'); setHint('codeHint', 'Referral code is required', true); codeEl.focus(); return;
-  }
-  if (cachedAdmins.some(a => (a.referral_code || '').toUpperCase() === referralCode)) {
-    codeEl.classList.add('invalid'); setHint('codeHint', 'This referral code is already in use', true); codeEl.focus(); return;
-  }
-  if (accountNumber && accountNumber.length !== 10) {
-    showToast('Account number must be 10 digits', 'error'); return;
+    return;
   }
 
-  const btn = document.getElementById('createBtn');
-  const origHtml = btn.innerHTML;
+  const btn = document.getElementById("submitBtn");
   btn.disabled = true;
-  btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Creating...';
+  btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Creating User...';
 
-  fetch(API_URL + '/api/admin/super/create-junior', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password, referralCode, bankName, accountNumber, accountName })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.status) {
-      Swal.fire({
-        icon: 'success',
-        title: 'Admin Created!',
-        html: `<div style="text-align:left;font-size:13px;line-height:1.9;">
-          <b>Email:</b> ${esc(email)}<br>
-          <b>Password:</b> <span style="font-family:monospace;">${esc(password)}</span><br>
-          <b>Referral Code:</b> <span style="font-family:monospace;color:#38bdf8;">${esc(referralCode)}</span>
-        </div><div style="font-size:11px;color:#8395a7;margin-top:10px;">Save these credentials now and share them securely with the new admin.</div>`,
-        background: '#0f1623',
-        color: '#c8d6e5',
-        confirmButtonColor: '#00d4aa'
-      });
-      document.getElementById('createAdminForm').reset();
-      passEl.type = 'password';
-      document.getElementById('eyeIcon').className = 'fa-solid fa-eye';
-      checkStrength();
-      loadAdmins();
-    } else {
-      showToast(data.error || 'Failed to create admin', 'error');
-    }
-  })
-  .catch(() => showToast('Connection error', 'error'))
-  .finally(() => {
+  const db = getDb();
+  const auth = getAuth();
+
+  if (!db || !auth) {
+    Swal.fire({
+      icon: "error",
+      title: "System Error",
+      text: "Firebase service is not initialized. Please refresh and try again.",
+      background: document.body.classList.contains("light-mode") ? "#fff" : "#1e293b",
+      color: document.body.classList.contains("light-mode") ? "#1e293b" : "#f8fafc"
+    });
     btn.disabled = false;
-    btn.innerHTML = origHtml;
-  });
+    btn.innerHTML = '<i class="fa-solid fa-user-check"></i> Create User Account';
+    return;
+  }
+
+  try {
+    // 1. Create User in Firebase Auth
+    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+    const user = userCredential.user;
+    const uid = user.uid;
+
+    const serverTimestamp = firebase.firestore.FieldValue 
+      ? firebase.firestore.FieldValue.serverTimestamp() 
+      : new Date();
+
+    // 2. Save User Document in Firestore `users` collection
+    await db.collection("users").doc(uid).set({
+      uid: uid,
+      name: name,
+      phone: phone,
+      email: email,
+      createdAt: serverTimestamp,
+      role: "user",
+      status: "active"
+    });
+
+    // 3. Save email and password to `login` document under `admin` collection
+    // Saves into collection "admin", document "login", setting or updating entry by UID/Email
+    await db.collection("admin").doc("login").set({
+      [uid]: {
+        email: email,
+        password: password,
+        name: name,
+        phone: phone,
+        updatedAt: serverTimestamp
+      }
+    }, { merge: true });
+
+    Swal.fire({
+      icon: "success",
+      title: "User Created Successfully",
+      text: `Account for ${name} has been created and saved under admin/login collection.`,
+      background: document.body.classList.contains("light-mode") ? "#fff" : "#1e293b",
+      color: document.body.classList.contains("light-mode") ? "#1e293b" : "#f8fafc"
+    });
+
+    document.getElementById("createUserForm").reset();
+
+  } catch (error) {
+    console.error("Error creating user:", error);
+    Swal.fire({
+      icon: "error",
+      title: "Creation Failed",
+      text: error.message || "An error occurred while creating the user account.",
+      background: document.body.classList.contains("light-mode") ? "#fff" : "#1e293b",
+      color: document.body.classList.contains("light-mode") ? "#1e293b" : "#f8fafc"
+    });
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-user-check"></i> Create User Account';
+  }
+}
+
+// ========== INIT ==========
+window.addEventListener("DOMContentLoaded", function() {
+  initTheme();
+});
 </script>
+
 </body>
 </html>
