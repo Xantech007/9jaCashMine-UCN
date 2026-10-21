@@ -355,37 +355,6 @@ select.form-input{cursor:pointer;appearance:none;background-image:url("data:imag
 <div class="bg-anim"></div>
 <div class="grid-overlay"></div>
 
-<!-- LOGIN -->
-<div class="login-wrap" id="loginScreen">
-  <div class="login-box">
-    <div class="login-glow"></div>
-    <div class="login-avatar"><i class="fa-solid fa-shield-halved"></i></div>
-    <div class="login-title">9jaCash HQ</div>
-    <div class="login-sub">Admin Control Center</div>
-    <div class="input-wrap">
-      <label class="input-label">Email</label>
-      <input type="email" class="input-field" id="loginEmail" placeholder="admin@9jacash.com">
-    </div>
-    <div class="input-wrap">
-      <label class="input-label">Password</label>
-      <input type="password" class="input-field" id="loginPassword" placeholder="Enter password">
-    </div>
-    <button class="login-btn" id="loginBtn" onclick="doLogin()">
-      <i class="fa-solid fa-arrow-right-to-bracket"></i> Access Control
-    </button>
-    <div class="login-error" id="loginError">
-      <i class="fa-solid fa-circle-xmark"></i> <span id="loginErrorText">Invalid</span>
-    </div>
-  </div>
-</div>
-
-<!-- LOADING -->
-<div class="loading-wrap" id="loadingScreen">
-  <div class="load-spinner"></div>
-  <div class="load-text">Loading HQ</div>
-  <div class="load-sub">Syncing with Firebase...</div>
-</div>
-
 <!-- MAIN APP -->
 <div class="app hidden" id="mainApp">
 
@@ -1522,60 +1491,6 @@ const DEFAULT_TASKS=[
   {id:'t10',name:'Download App',cat:'other',link:'',amt:500,hot:false}
 ];
 
-function initAuth(){
-  auth.onAuthStateChanged(user=>{
-    if(user){
-      document.getElementById('loginScreen').classList.add('hidden');
-      document.getElementById('loadingScreen').classList.add('active');
-      loadData();
-    }else{
-      document.getElementById('loginScreen').classList.remove('hidden');
-      document.getElementById('mainApp').classList.add('hidden');
-      document.getElementById('loadingScreen').classList.remove('active');
-    }
-  });
-}
-
-function doLogin(){
-  const email=document.getElementById('loginEmail').value.trim();
-  const pass=document.getElementById('loginPassword').value;
-  const errDiv=document.getElementById('loginError');
-  const errText=document.getElementById('loginErrorText');
-  const btn=document.getElementById('loginBtn');
-  
-  if(!email||!pass){
-    errText.textContent='Enter email and password';
-    errDiv.classList.add('show');
-    return;
-  }
-  
-  btn.disabled=true;
-  btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin"></i> Accessing...';
-  errDiv.classList.remove('show');
-  
-  auth.signInWithEmailAndPassword(email,pass)
-    .then(()=>{errDiv.classList.remove('show');})
-    .catch(e=>{
-      let msg=e.message;
-      if(msg.includes('user-not-found'))msg='No account found';
-      else if(msg.includes('wrong-password'))msg='Wrong password';
-      else if(msg.includes('invalid-email'))msg='Invalid email';
-      else if(msg.includes('invalid-credential'))msg='Invalid credentials';
-      else msg=msg.replace('Firebase: ','').replace(/\(.+\)/,'');
-      errText.textContent=msg;
-      errDiv.classList.add('show');
-      btn.disabled=false;
-      btn.innerHTML='<i class="fa-solid fa-arrow-right-to-bracket"></i> Access Control';
-    });
-}
-
-function doLogout(){auth.signOut().then(()=>location.reload());}
-
-['loginEmail','loginPassword'].forEach(id=>{
-  document.getElementById(id).addEventListener('keypress',e=>{
-    if(e.key==='Enter')doLogin();
-  });
-});
 
 // ========== TABS ==========
 function switchTab(tab,el){
