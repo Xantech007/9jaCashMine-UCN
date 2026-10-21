@@ -35,6 +35,13 @@ body.light-mode .theme-toggle{color:#64748b;}
 body.light-mode .flow-badge{background:#f1f5f9;color:#64748b;border-color:#e2e8f0;}
 body.light-mode .input-label{color:#64748b;}
 body.light-mode .footer-text{color:#94a3b8;}
+body.light-mode .form-title,body.light-mode .list-title{color:#1e293b;}
+body.light-mode .admin-item{background:#f8fafc;border-color:#e2e8f0;}
+body.light-mode .admin-name{color:#1e293b;}
+body.light-mode .admin-meta{color:#64748b;}
+body.light-mode .pass-text{background:#fff;border-color:#e2e8f0;color:#334155;}
+body.light-mode .count-pill{background:#eef2ff;color:#6366f1;}
+body.light-mode .icon-btn{background:#fff;border-color:#e2e8f0;color:#64748b;}
 
 .soft-bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse at 0% 0%,rgba(99,102,241,0.12),transparent 50%),radial-gradient(ellipse at 100% 100%,rgba(236,72,153,0.08),transparent 50%),radial-gradient(ellipse at 50% 50%,rgba(16,185,129,0.06),transparent 50%),#0f172a;transition:all 0.3s ease;}
 
@@ -75,6 +82,22 @@ body.light-mode .footer-text{color:#94a3b8;}
 .submit-btn:active{transform:scale(0.97);}
 .submit-btn:disabled{background:#1e293b;color:#64748b;box-shadow:none;cursor:not-allowed;border:1px solid #334155;}
 .submit-btn:disabled::before{display:none;}
+
+/* ===== Created admins list ===== */
+.list-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px;}
+.list-title{font-size:18px;font-weight:800;color:#f8fafc;display:flex;align-items:center;gap:10px;}
+.count-pill{background:rgba(99,102,241,0.18);color:#a5b4fc;font-size:12px;font-weight:800;padding:3px 10px;border-radius:50px;}
+.icon-btn{width:38px;height:38px;border-radius:12px;background:#0f172a;border:1px solid #334155;color:#94a3b8;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;}
+.icon-btn:hover{color:#818cf8;border-color:#6366f1;}
+.list-search{margin-bottom:14px;}
+.admin-item{background:#0f172a;border:1px solid #334155;border-radius:16px;padding:14px 16px;margin-bottom:10px;}
+.admin-top{display:flex;align-items:center;gap:12px;}
+.admin-avatar{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;}
+.admin-name{font-size:14px;font-weight:800;color:#f8fafc;word-break:break-word;}
+.admin-meta{font-size:12px;color:#94a3b8;font-weight:500;margin-top:2px;word-break:break-all;}
+.admin-row{display:flex;align-items:center;gap:8px;margin-top:10px;}
+.pass-text{flex:1;min-width:0;background:#1e293b;border:1px solid #334155;border-radius:10px;padding:8px 10px;font-family:monospace;font-size:12px;color:#cbd5e1;word-break:break-all;}
+.list-empty{text-align:center;color:#64748b;font-size:13px;font-weight:600;padding:24px 8px;}
 
 .footer{text-align:center;margin-top:32px;}
 .footer-text{font-size:12px;color:#64748b;font-weight:500;transition:color 0.3s;}
@@ -159,6 +182,19 @@ body.light-mode .footer-text{color:#94a3b8;}
   </form>
 </div>
 
+<!-- CREATED ADMINS -->
+<div class="card anim d3">
+  <div class="list-head">
+    <div class="list-title"><i class="fa-solid fa-users-gear" style="color:#6366f1;"></i> Created Admins <span class="count-pill" id="adminCount">0</span></div>
+    <button type="button" class="icon-btn" onclick="startAdminListener()" title="Reload list"><i class="fa-solid fa-rotate"></i></button>
+  </div>
+  <div class="input-wrapper list-search">
+    <input type="text" id="adminSearch" class="input-field" placeholder="Search name, email or phone" oninput="renderAdmins()" />
+    <i class="fa-solid fa-magnifying-glass input-icon"></i>
+  </div>
+  <div id="adminList"><div class="list-empty">Loading admins...</div></div>
+</div>
+
 <div class="footer anim d4">
   <div class="footer-text">9jaCash 2026 • Admin Portal</div>
 </div>
@@ -211,6 +247,118 @@ function togglePasswordVisibility(fieldId, iconId) {
     field.type = "password";
     icon.className = "fa-solid fa-eye";
   }
+}
+
+// ========== VIEW CREATED ADMINS (admin/login document) ==========
+let adminsData = [];
+let adminUnsub = null;
+const revealed = new Set();
+
+function escapeHtml(v) {
+  return String(v == null ? "" : v).replace(/[&<>"']/g, c => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+  ));
+}
+
+function formatTs(ts) {
+  try {
+    const d = ts && typeof ts.toDate === "function" ? ts.toDate() : (ts ? new Date(ts) : null);
+    return d && !isNaN(d) ? d.toLocaleString() : "";
+  } catch (e) { return ""; }
+}
+
+function startAdminListener() {
+  const db = getDb();
+  const list = document.getElementById("adminList");
+  if (!db) {
+    list.innerHTML = '<div class="list-empty">Firebase is not initialized. Make sure firebase.js is in the same folder.</div>';
+    return;
+  }
+  if (adminUnsub) { adminUnsub(); adminUnsub = null; }
+
+  // Live updates: new admins appear immediately after creation
+  adminUnsub = db.collection("admin").doc("login").onSnapshot(snap => {
+    const rows = [];
+    if (snap.exists) {
+      const data = snap.data() || {};
+      Object.keys(data).forEach(key => {
+        const v = data[key];
+        if (v && typeof v === "object" && !Array.isArray(v) && typeof v.toDate !== "function" &&
+            (v.email !== undefined || v.password !== undefined)) {
+          rows.push({ id: key, name: v.name || "", phone: v.phone || "", email: v.email || "", password: v.password || "", updatedAt: v.updatedAt });
+        }
+      });
+      // also show a plain top-level email/password entry if present
+      if (data.email !== undefined || data.password !== undefined) {
+        rows.push({ id: "login", name: data.name || "", phone: data.phone || "", email: data.email || "", password: data.password || "", updatedAt: data.updatedAt });
+      }
+    }
+    rows.sort((a, b) => {
+      const ta = a.updatedAt && a.updatedAt.toMillis ? a.updatedAt.toMillis() : 0;
+      const tb = b.updatedAt && b.updatedAt.toMillis ? b.updatedAt.toMillis() : 0;
+      return tb - ta;
+    });
+    adminsData = rows;
+    renderAdmins();
+  }, err => {
+    console.error("Admin list error:", err);
+    list.innerHTML = '<div class="list-empty">Could not load admins: ' + escapeHtml(err.message) + '</div>';
+  });
+}
+
+function renderAdmins() {
+  const list = document.getElementById("adminList");
+  const q = (document.getElementById("adminSearch").value || "").trim().toLowerCase();
+  document.getElementById("adminCount").textContent = adminsData.length;
+
+  const rows = adminsData.filter(a =>
+    !q || [a.name, a.email, a.phone].some(x => String(x).toLowerCase().includes(q)));
+
+  if (!rows.length) {
+    list.innerHTML = '<div class="list-empty">' + (adminsData.length ? "No admins match your search." : "No admins created yet.") + '</div>';
+    return;
+  }
+
+  list.innerHTML = rows.map(a => {
+    const shown = revealed.has(a.id);
+    const initial = escapeHtml((a.name || a.email || "?").trim().charAt(0).toUpperCase());
+    const when = formatTs(a.updatedAt);
+    return `
+      <div class="admin-item">
+        <div class="admin-top">
+          <div class="admin-avatar">${initial}</div>
+          <div style="min-width:0;">
+            <div class="admin-name">${escapeHtml(a.name || "(no name)")}</div>
+            <div class="admin-meta"><i class="fa-solid fa-envelope"></i> ${escapeHtml(a.email)}</div>
+            ${a.phone ? `<div class="admin-meta"><i class="fa-solid fa-phone"></i> ${escapeHtml(a.phone)}</div>` : ""}
+            ${when ? `<div class="admin-meta"><i class="fa-regular fa-clock"></i> ${escapeHtml(when)}</div>` : ""}
+          </div>
+        </div>
+        <div class="admin-row">
+          <div class="pass-text">${shown ? escapeHtml(a.password) : "••••••••"}</div>
+          <button type="button" class="icon-btn" title="${shown ? "Hide" : "Show"} password" onclick="toggleReveal('${escapeHtml(a.id)}')">
+            <i class="fa-solid ${shown ? "fa-eye-slash" : "fa-eye"}"></i>
+          </button>
+          <button type="button" class="icon-btn" title="Copy email" onclick="copyText('${escapeHtml(a.id)}','email')">
+            <i class="fa-solid fa-copy"></i>
+          </button>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+function toggleReveal(id) {
+  if (revealed.has(id)) revealed.delete(id); else revealed.add(id);
+  renderAdmins();
+}
+
+function copyText(id, field) {
+  const a = adminsData.find(x => x.id === id);
+  if (!a) return;
+  const text = a[field] || "";
+  (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject())
+    .then(() => Swal.fire({ toast: true, position: "top", icon: "success", title: "Copied", showConfirmButton: false, timer: 1200 }))
+    .catch(() => Swal.fire({ toast: true, position: "top", icon: "error", title: "Copy failed", showConfirmButton: false, timer: 1500 }));
 }
 
 // ========== HANDLE CREATE USER ==========
@@ -314,6 +462,7 @@ async function handleCreateUser(event) {
 // ========== INIT ==========
 window.addEventListener("DOMContentLoaded", function() {
   initTheme();
+  startAdminListener();
 });
 </script>
 
