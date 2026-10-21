@@ -8,7 +8,10 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="firebase-init.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="firebase.js"></script>
 <style>
 :root{
   --bg:#070b14;
@@ -1462,15 +1465,7 @@ select.form-input{cursor:pointer;appearance:none;background-image:url("data:imag
 
 <script>
 const API_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') ? 'http://localhost:3000' : '';
-const firebaseConfig={apiKey: "AIzaSyAojnW_iRXCk4mR9ihRz8GwQI4aPWIXepA",
-  authDomain: "jacash-51c97.firebaseapp.com",
-  databaseURL: "https://jacash-51c97-default-rtdb.firebaseio.com",
-  projectId: "jacash-51c97",
-  storageBucket: "jacash-51c97.firebasestorage.app",
-  messagingSenderId: "662540432833",
-  appId: "1:662540432833:web:244b7af8ea02ab56b76b40",
-  measurementId: "G-CEN430143Z"
-};
+// Firebase is initialized in firebase.js (window._9jaCash)
 
 
 
@@ -2084,13 +2079,38 @@ async function doLogin(){
   btn.disabled = true;
   txt.textContent = 'Signing in...';
   try {
-    const snap = await db.collection('admin').doc('login').get();
-    if (!snap.exists) { showLoginError('Admin login is not configured'); return; }
-    const data = snap.data() || {};
-    const savedEmail = String(data.email || '').trim().toLowerCase();
-    const savedPassword = String(data.password || '');
+    if (!db) db = window._9jaCash && window._9jaCash.db;
+    if (!db) { showLoginError('Database not connected. Make sure firebase.js is in the same folder as this page.'); return; }
+    // Gather candidate credential records from the admin collection
+    const candidates = [];
+    const ids = [];
+    const addCandidate = (d) => {
+      if (!d || typeof d !== 'object') return;
+      if (d.email !== undefined || d.password !== undefined) candidates.push(d);
+      // also support credentials nested in a map field named "login"
+      if (d.login && typeof d.login === 'object') candidates.push(d.login);
+    };
 
-    if (email === savedEmail && password === savedPassword) {
+    // 1) the exact document admin/login
+    const direct = await db.collection('admin').doc('login').get();
+    if (direct.exists) { ids.push('login'); addCandidate(direct.data()); }
+
+    // 2) every document in the admin collection (covers auto-ID docs / different doc names)
+    const all = await db.collection('admin').get();
+    all.forEach(doc => { if (doc.id !== 'login') { ids.push(doc.id); addCandidate(doc.data()); } });
+
+    if (!candidates.length) {
+      showLoginError(ids.length
+        ? 'No email/password fields found in admin docs: ' + ids.join(', ')
+        : 'No documents found in the "admin" collection');
+      return;
+    }
+
+    const ok = candidates.some(c =>
+      String(c.email || '').trim().toLowerCase() === email &&
+      String(c.password || '') === password);
+
+    if (ok) {
       try { sessionStorage.setItem(ADMIN_SESSION_KEY, '1'); } catch(e) {}
       enterApp();
     } else {
