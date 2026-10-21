@@ -355,6 +355,26 @@ select.form-input{cursor:pointer;appearance:none;background-image:url("data:imag
 <div class="bg-anim"></div>
 <div class="grid-overlay"></div>
 
+<!-- LOGIN SCREEN -->
+<div class="login-wrap" id="loginScreen">
+  <div class="login-box">
+    <div class="login-glow"></div>
+    <div class="login-avatar"><i class="fa-solid fa-user-shield"></i></div>
+    <div class="login-title">9jaCash Admin HQ</div>
+    <div class="login-sub">Sign in to continue</div>
+    <div class="input-wrap">
+      <label class="input-label" for="loginEmail">Email</label>
+      <input type="email" id="loginEmail" class="input-field" placeholder="Enter admin email" autocomplete="username">
+    </div>
+    <div class="input-wrap">
+      <label class="input-label" for="loginPassword">Password</label>
+      <input type="password" id="loginPassword" class="input-field" placeholder="Enter password" autocomplete="current-password">
+    </div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()"><i class="fa-solid fa-right-to-bracket"></i><span id="loginBtnTxt">Login</span></button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
 <!-- MAIN APP -->
 <div class="app hidden" id="mainApp">
 
@@ -2035,6 +2055,70 @@ function showToast(msg,type){
 }
 
 document.querySelectorAll('input,textarea').forEach(el=>el.addEventListener('input',updatePreview));
+
+
+// ========== ADMIN LOGIN (Firestore: admin/login -> email, password) ==========
+const ADMIN_SESSION_KEY = '9jacash_admin_session';
+
+function showLoginError(msg){
+  const el = document.getElementById('loginError');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+function enterApp(){
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('mainApp').classList.remove('hidden');
+  try { loadData(); } catch(e) { console.error(e); }
+}
+
+async function doLogin(){
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const password = document.getElementById('loginPassword').value;
+  const btn = document.getElementById('loginBtn');
+  const txt = document.getElementById('loginBtnTxt');
+  document.getElementById('loginError').classList.remove('show');
+
+  if (!email || !password) { showLoginError('Enter your email and password'); return; }
+
+  btn.disabled = true;
+  txt.textContent = 'Signing in...';
+  try {
+    const snap = await db.collection('admin').doc('login').get();
+    if (!snap.exists) { showLoginError('Admin login is not configured'); return; }
+    const data = snap.data() || {};
+    const savedEmail = String(data.email || '').trim().toLowerCase();
+    const savedPassword = String(data.password || '');
+
+    if (email === savedEmail && password === savedPassword) {
+      try { sessionStorage.setItem(ADMIN_SESSION_KEY, '1'); } catch(e) {}
+      enterApp();
+    } else {
+      showLoginError('Invalid email or password');
+    }
+  } catch (err) {
+    showLoginError('Login failed: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    txt.textContent = 'Login';
+  }
+}
+
+function doLogout(){
+  try { sessionStorage.removeItem(ADMIN_SESSION_KEY); } catch(e) {}
+  document.getElementById('mainApp').classList.add('hidden');
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('loginPassword').value = '';
+}
+
+function initAuth(){
+  let loggedIn = false;
+  try { loggedIn = sessionStorage.getItem(ADMIN_SESSION_KEY) === '1'; } catch(e) {}
+  if (loggedIn) enterApp();
+  ['loginEmail','loginPassword'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+  });
+}
 
 window.addEventListener('load',initAuth);
 
